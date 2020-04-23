@@ -61,4 +61,4 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: K2_Firmware
-        path: opt/rt-n56u/trunk/images
+        path: /opt/rt-n56u/trunk/images
