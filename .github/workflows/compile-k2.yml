@@ -6,8 +6,8 @@ on:
       - master
     paths:
       - 'PSG1218.config'
-  schedule:
-    - cron: 0 18 * * 5
+  # schedule:
+  #   - cron: 0 18 * * 5
   watch:
     types: [started]
     
