@@ -1,0 +1,64 @@
+name: Compiler for K2
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'PSG1218.config'
+  schedule:
+    - cron: 0 18 * * 5
+  watch:
+    types: [started]
+    
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Initialize environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        docker rmi `docker images -q`
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
+        sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*        
+        sudo -E apt-get update
+        sudo -E apt install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd cpio git python-docutils gettext automake autopoint texinfo build-essential help2man pkg-config zlib1g-dev libgmp3-dev libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev
+        sudo -E apt-get autoremove --purge
+        sudo -E apt-get clean
+
+    - name: Clone source code
+      run: |
+        git clone --depth=1 https://github.com/hanwckf/rt-n56u.git /opt/rt-n56u
+        df -h
+
+    - name: Prepare toolchain
+      run: |
+        cd /opt/rt-n56u/toolchain-mipsel
+        ./clean_toolchain
+        ./build_toolchain
+
+    - name: Load config
+      run: |
+        [ -e PSG1218.config ] && mv PSG1218.config /opt/rt-n56u/trunk/configs/templates/PSG1218.config
+
+    - name: Build
+      run: |
+        cd /opt/rt-n56u/trunk
+        sudo ./clear_tree
+        sudo ./build_firmware_modify PSG1218
+
+    - name: Space Usage
+      run: |
+        df -h
+
+    - name: Upload firmware
+      uses: actions/upload-artifact@master
+      with:
+        name: K2_Firmware
+        path: opt/rt-n56u/trunk/images
